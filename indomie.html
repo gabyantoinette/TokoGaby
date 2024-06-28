@@ -97,13 +97,14 @@
         </form>
     </div>
     
+    <!-- Firebase SDK (v9.x.x) -->
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
-
-    <!-- Add Firebase products that you want to use -->
-    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from 'firebase/app';
+        import { getFirestore, collection, addDoc, getDocs } from 'firebase/firestore';
+
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
@@ -116,23 +117,21 @@
         };
 
         // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-
-        // Get a reference to the Firestore service
-        const db = firebase.firestore();
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
-            db.collection("indomieStock").add({
+            addDoc(collection(db, "indomieStock"), {
                 name: itemName,
                 quantity: itemQuantity,
                 buyPrice: itemBuyPrice,
                 sellPrice: itemSellPrice,
                 expiryDate: itemExpiryDate
             })
-            .then(function(docRef) {
+            .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
             })
-            .catch(function(error) {
+            .catch((error) => {
                 console.error("Error adding document: ", error);
             });
         }
@@ -141,7 +140,8 @@
             var tableBody = document.getElementById('stockTableBody');
             tableBody.innerHTML = '';
 
-            db.collection("indomieStock").get().then((querySnapshot) => {
+            getDocs(collection(db, "indomieStock"))
+            .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     var data = doc.data();
                     var row = tableBody.insertRow();
@@ -153,6 +153,9 @@
                         <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
                     `;
                 });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
             });
         }
 
