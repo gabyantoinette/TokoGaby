@@ -5,8 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pencatatan Stok Terpal</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS tambahan untuk mengatur tombol back */
+        .btn-back {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 8px 16px;
+            background-color: #f0f0f0;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
+    <button class="btn-back" id="btnBack">Back</button>
     <div class="container">
         <h1>Pencatatan Stok Terpal</h1>
         <form id="terpalStockForm">
@@ -20,7 +33,6 @@
             </div>
             <div class="form-group">
                 <button type="submit">Tambahkan Stok Terpal</button>
-                <button type="button" id="btnBack">Back</button> 
             </div>
         </form>
     </div>
@@ -29,7 +41,7 @@
     <script>
         document.getElementById('btnBack').addEventListener('click', function(event) {
             event.preventDefault();
-            window.history.back();
+            window.history.back(); // Kembali ke halaman sebelumnya
         });
 
         document.getElementById('terpalStockForm').addEventListener('submit', function(event) {
@@ -37,8 +49,10 @@
             var terpalQuantity = document.getElementById('terpalQuantity').value;
             var terpalPrice = document.getElementById('terpalPrice').value;
 
+            // Lakukan sesuatu dengan data stok terpal yang ditambahkan
             console.log('Menambahkan stok terpal: Jumlah = ' + terpalQuantity + ', Harga = ' + terpalPrice);
 
+            // Reset form setelah berhasil menambahkan
             document.getElementById('terpalStockForm').reset();
         });
     </script>
