@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatatan Stok Barang</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div id="loginSection" class="form-container">
+            <h1>Login</h1>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit">Login</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="selectionSection" class="form-container" style="display: none;">
+            <h1>Apa yang ingin anda catat?</h1>
+            <div class="button-group">
+                <button id="btnIndomie">Indomie</button>
+                <button id="btnTerpal">Terpal</button>
+            </div>
+        </div>
+
+        <div id="formSection" class="form-container" style="display: none;">
+            <h1>Pencatatan Stok Barang</h1>
+            <form id="stockForm">
+                <div class="form-group">
+                    <label for="itemName">Nama Barang:</label>
+                    <input type="text" id="itemName" name="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemQuantity">Jumlah:</label>
+                    <input type="number" id="itemQuantity" name="itemQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemPrice">Harga:</label>
+                    <input type="number" id="itemPrice" name="itemPrice" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit">Tambahkan Barang</button>
+                    <button type="button" id="btnBack">Back</button> <!-- Tombol Back untuk kembali ke pilihan -->
+                </div>
+            </form>
+            <table id="stockTable">
+                <thead>
+                    <tr>
+                        <th>Nama Barang</th>
+                        <th>Jumlah</th>
+                        <th>Harga</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
