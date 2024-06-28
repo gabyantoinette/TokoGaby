@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatatan Stok Indomie</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pencatatan Stok Indomie</h1>
+        <form id="indomieStockForm">
+            <div class="form-group">
+                <label for="indomieQuantity">Jumlah Indomie:</label>
+                <input type="number" id="indomieQuantity" name="indomieQuantity" required>
+            </div>
+            <div class="form-group">
+                <label for="indomiePrice">Harga Per Indomie:</label>
+                <input type="number" id="indomiePrice" name="indomiePrice" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Tambahkan Stok Indomie</button>
+                <button type="button" id="btnBack">Back</button> 
+            </div>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('btnBack').addEventListener('click', function(event) {
+            event.preventDefault();
+            window.history.back(); 
+        });
+
+        document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var indomieQuantity = document.getElementById('indomieQuantity').value;
+            var indomiePrice = document.getElementById('indomiePrice').value;
+
+            console.log('Menambahkan stok indomie: Jumlah = ' + indomieQuantity + ', Harga = ' + indomiePrice);
+
+            document.getElementById('indomieStockForm').reset();
+        });
+    </script>
+</body>
+</html>

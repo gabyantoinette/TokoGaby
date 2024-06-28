@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencatatan Stok Terpal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Pencatatan Stok Terpal</h1>
+        <form id="terpalStockForm">
+            <div class="form-group">
+                <label for="terpalQuantity">Jumlah Terpal:</label>
+                <input type="number" id="terpalQuantity" name="terpalQuantity" required>
+            </div>
+            <div class="form-group">
+                <label for="terpalPrice">Harga Per Terpal:</label>
+                <input type="number" id="terpalPrice" name="terpalPrice" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Tambahkan Stok Terpal</button>
+                <button type="button" id="btnBack">Back</button> 
+            </div>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('btnBack').addEventListener('click', function(event) {
+            event.preventDefault();
+            window.history.back();
+        });
+
+        document.getElementById('terpalStockForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var terpalQuantity = document.getElementById('terpalQuantity').value;
+            var terpalPrice = document.getElementById('terpalPrice').value;
+
+            console.log('Menambahkan stok terpal: Jumlah = ' + terpalQuantity + ', Harga = ' + terpalPrice);
+
+            document.getElementById('terpalStockForm').reset();
+        });
+    </script>
+</body>
+</html>
