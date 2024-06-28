@@ -60,7 +60,7 @@ document.getElementById('indomieStockForm').addEventListener('submit', function(
     event.preventDefault();
 
     // Mengambil nilai dari input
-    var quantity = document.getElementById('indomieQuantity').value;
+    var itemName = document.getElementById('itemName').value;
     var buyPrice = document.getElementById('indomieBuyPrice').value;
     var sellPrice = document.getElementById('indomieSellPrice').value;
     var stock = document.getElementById('indomieStock').value;
@@ -76,8 +76,7 @@ document.getElementById('indomieStockForm').addEventListener('submit', function(
     var cell4 = newRow.insertCell(3);
     var cell5 = newRow.insertCell(4);
 
-    cell1.innerHTML = "Indomie";
-    cell2.innerHTML = quantity;
+    cell1.innerHTML = itemName;
     cell3.innerHTML = buyPrice;
     cell4.innerHTML = sellPrice;
     cell5.innerHTML = stock + " pcs, Exp: " + expiryDate;
