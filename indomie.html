@@ -98,8 +98,13 @@
     </div>
     
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
+
     <script>
+        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
             authDomain: "tokogaby-176b7.firebaseapp.com",
@@ -110,7 +115,10 @@
             measurementId: "G-F4KL2E0JQY"
         };
 
+        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
+
+        // Get a reference to the Firestore service
         const db = firebase.firestore();
 
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
@@ -168,6 +176,12 @@
             var outgoingItemName = document.getElementById('outgoingItemName').value;
             var outgoingQuantity = document.getElementById('outgoingQuantity').value;
             var outgoingReason = document.getElementById('outgoingReason').value;
+
+            var currentStock = parseInt(document.getElementById('indomieStock').value, 10);
+            if (outgoingQuantity > currentStock) {
+                alert('Jumlah yang keluar melebihi stok yang tersedia.');
+                return;
+            }
 
             reduceStock(outgoingItemName, outgoingQuantity);
 
