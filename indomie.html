@@ -98,23 +98,9 @@
     
     <script src="script.js"></script>
     <script>
-        // Objek untuk menyimpan data stok Indomie
-        var indomieStock = [];
-
-        // Fungsi untuk menambahkan data stok Indomie ke objek
-        function addIndomieToStock(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
-            var newItem = {
-                name: itemName,
-                quantity: itemQuantity,
-                buyPrice: itemBuyPrice,
-                sellPrice: itemSellPrice,
-                expiryDate: itemExpiryDate
-            };
-            indomieStock.push(newItem);
-        }
-
-        // Fungsi untuk menampilkan data stok Indomie dalam tabel
-        function displayStock() {
+        // Fungsi untuk menampilkan data dari localStorage ke tabel saat halaman dimuat
+        function displayStockFromLocalStorage() {
+            var indomieStock = JSON.parse(localStorage.getItem('indomieStock')) || [];
             var tableBody = document.getElementById('stockTableBody');
             tableBody.innerHTML = '';
 
@@ -130,6 +116,20 @@
             });
         }
 
+        // Fungsi untuk menambahkan data stok Indomie ke localStorage
+        function addIndomieToLocalStorage(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
+            var indomieStock = JSON.parse(localStorage.getItem('indomieStock')) || [];
+            var newItem = {
+                name: itemName,
+                quantity: itemQuantity,
+                buyPrice: itemBuyPrice,
+                sellPrice: itemSellPrice,
+                expiryDate: itemExpiryDate
+            };
+            indomieStock.push(newItem);
+            localStorage.setItem('indomieStock', JSON.stringify(indomieStock));
+        }
+
         // Fungsi untuk menangani submit form penambahan stok Indomie
         document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -139,11 +139,11 @@
             var itemStock = document.getElementById('indomieStock').value;
             var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
 
-            // Tambahkan data stok Indomie ke objek
-            addIndomieToStock(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
+            // Tambahkan data stok Indomie ke localStorage
+            addIndomieToLocalStorage(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
 
-            // Tampilkan ulang tabel stok
-            displayStock();
+            // Tampilkan ulang tabel stok dari localStorage
+            displayStockFromLocalStorage();
 
             // Reset form setelah berhasil menambahkan
             document.getElementById('indomieStockForm').reset();
@@ -166,11 +166,11 @@
             var newStock = currentStock - outgoingQuantity;
             document.getElementById('indomieStock').value = newStock;
 
-            // Tambahkan entri baru ke objek untuk mencatat pengeluaran
-            addIndomieToStock("Indomie (Keluar)", "-" + outgoingQuantity, "", "", outgoingQuantity + " pcs, Alasan: " + outgoingReason);
+            // Tambahkan entri baru ke localStorage untuk mencatat pengeluaran
+            addIndomieToLocalStorage("Indomie (Keluar)", "-" + outgoingQuantity, "", "", outgoingQuantity + " pcs, Alasan: " + outgoingReason);
 
-            // Tampilkan ulang tabel stok
-            displayStock();
+            // Tampilkan ulang tabel stok dari localStorage
+            displayStockFromLocalStorage();
 
             // Reset form setelah berhasil mencatat pengeluaran
             document.getElementById('indomieOutgoingForm').reset();
@@ -181,6 +181,9 @@
             event.preventDefault();
             window.history.back();
         });
+
+        // Memanggil fungsi untuk menampilkan data stok saat halaman dimuat
+        displayStockFromLocalStorage();
     </script>
 </body>
 </html>
