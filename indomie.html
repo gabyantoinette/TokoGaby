@@ -15,6 +15,22 @@
             border: none;
             cursor: pointer;
         }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -24,7 +40,7 @@
         <form id="indomieStockForm">
             <div class="form-group">
                 <label for="itemName">Nama Barang:</label>
-                <input type="text" id="itemName" name="itemName" value="Indomie" required>
+                <input type="text" id="itemName" name="itemName" value="Indomie" readonly>
             </div>
             <div class="form-group">
                 <label for="indomieBuyPrice">Harga Beli Per Indomie:</label>
@@ -46,9 +62,23 @@
                 <button type="submit">Tambahkan Stok Indomie</button>
             </div>
         </form>
+
+        <table id="stockTable">
+            <thead>
+                <tr>
+                    <th>Nama Barang</th>
+                    <th>Jumlah</th>
+                    <th>Harga Beli</th>
+                    <th>Harga Jual</th>
+                    <th>Stok dan Kadaluarsa</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Data stok Indomie akan ditampilkan di sini -->
+            </tbody>
+        </table>
     </div>
     
-
     <script src="script.js"></script>
     <script>
         document.getElementById('btnBack').addEventListener('click', function(event) {
@@ -58,11 +88,27 @@
 
         document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            var indomieQuantity = document.getElementById('indomieQuantity').value;
-            var indomiePrice = document.getElementById('indomiePrice').value;
+            var itemName = document.getElementById('itemName').value;
+            var itemQuantity = document.getElementById('indomieStock').value;
+            var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
+            var itemSellPrice = document.getElementById('indomieSellPrice').value;
+            var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
 
-            // Lakukan sesuatu dengan data stok indomie yang ditambahkan
-            console.log('Menambahkan stok indomie: Jumlah = ' + indomieQuantity + ', Harga = ' + indomiePrice);
+            // Menambahkan baris baru ke tabel
+            var table = document.getElementById('stockTable').getElementsByTagName('tbody')[0];
+            var newRow = table.insertRow();
+
+            var cell1 = newRow.insertCell(0);
+            var cell2 = newRow.insertCell(1);
+            var cell3 = newRow.insertCell(2);
+            var cell4 = newRow.insertCell(3);
+            var cell5 = newRow.insertCell(4);
+
+            cell1.innerHTML = itemName;
+            cell2.innerHTML = itemQuantity;
+            cell3.innerHTML = itemBuyPrice;
+            cell4.innerHTML = itemSellPrice;
+            cell5.innerHTML = itemQuantity + " pcs, Exp: " + itemExpiryDate;
 
             // Reset form setelah berhasil menambahkan
             document.getElementById('indomieStockForm').reset();
