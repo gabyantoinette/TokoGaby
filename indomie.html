@@ -97,121 +97,21 @@
         </form>
     </div>
     
-    <script src="script.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js"></script>
-
-<!-- Add Firebase products that you want to use -->
-<script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js"></script>
     <script>
-        function displayStockFromLocalStorage() {
-            var indomieStock = JSON.parse(localStorage.getItem('indomieStock')) || [];
-            var tableBody = document.getElementById('stockTableBody');
-            tableBody.innerHTML = '';
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
-            indomieStock.forEach(function(item) {
-                var row = tableBody.insertRow();
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.buyPrice}</td>
-                    <td>${item.sellPrice}</td>
-                    <td>${item.quantity} pcs, Exp: ${item.expiryDate}</td>
-                `;
-            });
-        }
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        function addIndomieToLocalStorage(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
-            var indomieStock = JSON.parse(localStorage.getItem('indomieStock')) || [];
-            var newItem = {
-                name: itemName,
-                quantity: itemQuantity,
-                buyPrice: itemBuyPrice,
-                sellPrice: itemSellPrice,
-                expiryDate: itemExpiryDate
-            };
-            indomieStock.push(newItem);
-            localStorage.setItem('indomieStock', JSON.stringify(indomieStock));
-        }
-
-        function reduceStock(itemName, outgoingQuantity) {
-            var indomieStock = JSON.parse(localStorage.getItem('indomieStock')) || [];
-
-            for (var i = 0; i < indomieStock.length; i++) {
-                if (indomieStock[i].name === itemName) {
-                    indomieStock[i].quantity -= outgoingQuantity;
-                    break;
-                }
-            }
-
-            localStorage.setItem('indomieStock', JSON.stringify(indomieStock));
-        }
-
-        document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var itemName = document.getElementById('itemName').value;
-            var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
-            var itemSellPrice = document.getElementById('indomieSellPrice').value;
-            var itemStock = document.getElementById('indomieStock').value;
-            var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
-
-            addIndomieToLocalStorage(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
-
-            displayStockFromLocalStorage();
-
-            document.getElementById('indomieStockForm').reset();
-        });
-
-        document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var outgoingItemName = document.getElementById('outgoingItemName').value;
-            var outgoingQuantity = document.getElementById('outgoingQuantity').value;
-            var outgoingReason = document.getElementById('outgoingReason').value;
-
-            var currentStock = parseInt(document.getElementById('indomieStock').value, 10);
-            if (outgoingQuantity > currentStock) {
-                alert('Jumlah yang keluar melebihi stok yang tersedia.');
-                return;
-            }
-
-            reduceStock(outgoingItemName, outgoingQuantity);
-
-            displayStockFromLocalStorage();
-
-            document.getElementById('indomieOutgoingForm').reset();
-        });
-
-        document.getElementById('btnBack').addEventListener('click', function(event) {
-            event.preventDefault();
-            window.history.back();
-        });
-
-        displayStockFromLocalStorage();
-        // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
-  authDomain: "tokogaby-176b7.firebaseapp.com",
-  projectId: "tokogaby-176b7",
-  storageBucket: "tokogaby-176b7.appspot.com",
-  messagingSenderId: "723540448286",
-  appId: "1:723540448286:web:1938615ce97d4450920a0f",
-  measurementId: "G-F4KL2E0JQY"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-    </script>
-    <script>
-        var db = firebase.firestore();
-      
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             db.collection("indomieStock").add({
                 name: itemName,
@@ -227,11 +127,11 @@ const analytics = getAnalytics(app);
                 console.error("Error adding document: ", error);
             });
         }
-      
+
         function displayStockFromFirestore() {
             var tableBody = document.getElementById('stockTableBody');
             tableBody.innerHTML = '';
-      
+
             db.collection("indomieStock").get().then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     var data = doc.data();
@@ -246,7 +146,41 @@ const analytics = getAnalytics(app);
                 });
             });
         }
-      </script>
-      
+
+        document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var itemName = document.getElementById('itemName').value;
+            var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
+            var itemSellPrice = document.getElementById('indomieSellPrice').value;
+            var itemStock = document.getElementById('indomieStock').value;
+            var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
+
+            addIndomieToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
+
+            displayStockFromFirestore();
+
+            document.getElementById('indomieStockForm').reset();
+        });
+
+        document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var outgoingItemName = document.getElementById('outgoingItemName').value;
+            var outgoingQuantity = document.getElementById('outgoingQuantity').value;
+            var outgoingReason = document.getElementById('outgoingReason').value;
+
+            reduceStock(outgoingItemName, outgoingQuantity);
+
+            displayStockFromFirestore();
+
+            document.getElementById('indomieOutgoingForm').reset();
+        });
+
+        document.getElementById('btnBack').addEventListener('click', function(event) {
+            event.preventDefault();
+            window.history.back();
+        });
+
+        displayStockFromFirestore();
+    </script>
 </body>
 </html>
