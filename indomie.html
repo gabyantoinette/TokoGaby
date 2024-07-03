@@ -139,6 +139,7 @@
             .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
                 displayStockFromFirestore(); // Update table after adding new item
+                loadItemNames(); // Reload item names for outgoing form dropdown
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
@@ -164,6 +165,7 @@
             .then(() => {
                 console.log("Document successfully deleted!");
                 displayStockFromFirestore(); // Update table after deleting item
+                loadItemNames(); // Reload item names for outgoing form dropdown
             })
             .catch((error) => {
                 console.error("Error removing document: ", error);
@@ -205,6 +207,25 @@
             });
         }
 
+        function loadItemNames() {
+            getDocs(collection(db, "indomieStock"))
+            .then((querySnapshot) => {
+                const select = document.getElementById('outgoingItemName');
+                select.innerHTML = ''; // Clear existing options
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = data.name;
+                    option.textContent = data.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
+            });
+        }
+
         document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -230,7 +251,6 @@
                 querySnapshot.forEach((doc) => {
                     var data = doc.data();
                     if (data.name === itemName) {
-                        var docId = doc.id; // Dapatkan ID dokumen
                         var currentStock = data.quantity;
                         if (outgoingQuantity > currentStock) {
                             alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
@@ -238,7 +258,7 @@
                         }
 
                         var newQuantity = currentStock - outgoingQuantity;
-                        updateStockInFirestore(docId, newQuantity);
+                        updateStockInFirestore(doc.id, newQuantity);
 
                         console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
                     }
@@ -249,13 +269,12 @@
             });
         });
 
-        // Event listener untuk tombol "Back"
         document.getElementById('btnBack').addEventListener('click', function() {
             window.history.back();
         });
 
-        // Panggil fungsi untuk menampilkan stok dari Firestore saat halaman dimuat
-        displayStockFromFirestore();
+        displayStockFromFirestore(); // Panggil fungsi untuk menampilkan stok saat halaman dimuat
+        loadItemNames(); // Panggil fungsi untuk memuat nama barang ke dalam dropdown
     </script>
 </body>
 </html>
