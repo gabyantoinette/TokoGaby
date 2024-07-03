@@ -39,6 +39,10 @@
             padding: 5px 10px;
             cursor: pointer;
         }
+
+        .low-stock {
+            background-color: yellow;
+        }
     </style>
 </head>
 <body>
@@ -90,7 +94,9 @@
             <h2>Catat Pengeluaran Stok Indomie</h2>
             <div class="form-group">
                 <label for="outgoingItemName">Nama Barang yang Keluar:</label>
-                <input type="text" id="outgoingItemName" name="outgoingItemName" required>
+                <select id="outgoingItemName" name="outgoingItemName" required>
+                    <!-- Options will be dynamically added here -->
+                </select>
             </div>
             <div class="form-group">
                 <label for="outgoingQuantity">Jumlah yang Keluar:</label>
@@ -98,7 +104,7 @@
             </div>
             <div class="form-group">
                 <label for="outgoingReason">Alasan Pengeluaran:</label>
-                <input type="text" id="outgoingReason" name="outgoingReason" required>
+                <input type="text" id="outgoingReason" name="outgoingReason">
             </div>
             <div class="form-group">
                 <button type="submit">Catat Pengeluaran Stok</button>
@@ -160,6 +166,12 @@
                         <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
                         <td><button class="delete-btn" data-id="${doc.id}">Delete</button></td>
                     `;
+
+                    // Tambahkan warna kuning jika stok kurang dari 10
+                    if (data.quantity < 10) {
+                        row.classList.add('low-stock');
+                    }
+
                     var deleteButton = row.querySelector('.delete-btn');
                     deleteButton.addEventListener('click', function() {
                         var docId = deleteButton.getAttribute('data-id');
@@ -195,6 +207,36 @@
 
             document.getElementById('indomieStockForm').reset();
         });
+
+        document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var itemName = document.getElementById('outgoingItemName').value;
+            var quantity = parseInt(document.getElementById('outgoingQuantity').value);
+            var reason = document.getElementById('outgoingReason').value;
+
+            // Validasi jumlah yang keluar tidak boleh lebih dari jumlah stok yang ada
+            getDocs(collection(db, "indomieStock"))
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    var data = doc.data();
+                    if (data.name === itemName) {
+                        if (quantity > data.quantity) {
+                            alert(`Jumlah yang keluar (${quantity}) tidak boleh melebihi jumlah stok (${data.quantity})`);
+                            return;
+                        }
+                        recordOutgoingStock(itemName, quantity, reason);
+                    }
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
+            });
+        });
+
+        function recordOutgoingStock(itemName, quantity, reason) {
+            // Catat pengeluaran stok (simulasi, bisa disesuaikan untuk menyimpan ke Firestore)
+            console.log(`Barang yang keluar: ${itemName}, Jumlah: ${quantity}, Alasan: ${reason}`);
+        }
 
         document.getElementById('btnBack').addEventListener('click', function(event) {
             event.preventDefault();
@@ -239,9 +281,37 @@
                         <td>${data.sellPrice}</td>
                         <td>${data.expiryDate}</td>
                     `;
+
+                    // Tambahkan warna kuning jika stok kurang dari 10
+                    if (data.quantity < 10) {
+                        row.classList.add('low-stock');
+                    }
                 });
             }
         });
+
+        // Load item names for outgoing form dropdown
+        function loadItemNames() {
+            getDocs(collection(db, "indomieStock"))
+            .then((querySnapshot) => {
+                const select = document.getElementById('outgoingItemName');
+                select.innerHTML = ''; // Clear existing options
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const option = document.createElement('option');
+                    option.value = data.name;
+                    option.textContent = data.name;
+                    select.appendChild(option);
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
+            });
+        }
+
+        // Call function to load item names for outgoing form dropdown
+        loadItemNames();
 
     </script>
 
