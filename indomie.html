@@ -136,7 +136,7 @@
 
         function displayStockFromFirestore() {
             var tableBody = document.getElementById('stockTableBody');
-            tableBody.innerHTML = '';
+            tableBody.innerHTML = ''; // Clear existing rows
 
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
@@ -175,10 +175,10 @@
             window.history.back();
         });
 
-        // Load initial data when the page loads
-        document.addEventListener('DOMContentLoaded', () => {
+        // Load initial data when user logs in
+        function setLoggedInUI(username) {
             displayStockFromFirestore();
-        });
+        }
     
         // Save and load data to/from localStorage
         window.addEventListener('beforeunload', () => {
