@@ -71,6 +71,7 @@
                     <th>Harga Beli</th>
                     <th>Harga Jual</th>
                     <th>Stok dan Kadaluarsa</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody id="stockTableBody">
@@ -149,11 +150,28 @@
                         <td>${data.buyPrice}</td>
                         <td>${data.sellPrice}</td>
                         <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
+                        <td><button class="delete-btn" data-id="${doc.id}">Delete</button></td>
                     `;
+                    var deleteButton = row.querySelector('.delete-btn');
+                    deleteButton.addEventListener('click', function() {
+                        var docId = deleteButton.getAttribute('data-id');
+                        deleteIndomieFromFirestore(docId);
+                    });
                 });
             })
             .catch((error) => {
                 console.error("Error getting documents: ", error);
+            });
+        }
+
+        function deleteIndomieFromFirestore(docId) {
+            deleteDoc(doc(db, "indomieStock", docId))
+            .then(() => {
+                console.log("Document successfully deleted!");
+                displayStockFromFirestore(); 
+            })
+            .catch((error) => {
+                console.error("Error removing document: ", error);
             });
         }
 
