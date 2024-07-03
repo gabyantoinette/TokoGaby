@@ -112,11 +112,11 @@
             appId: "1:723540448286:web:1938615ce97d4450920a0f",
             measurementId: "G-F4KL2E0JQY"
         };
-    
+
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-    
+
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             addDoc(collection(db, "indomieStock"), {
                 name: itemName,
@@ -133,11 +133,11 @@
                 console.error("Error adding document: ", error);
             });
         }
-    
+
         function displayStockFromFirestore() {
             var tableBody = document.getElementById('stockTableBody');
             tableBody.innerHTML = '';
-    
+
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
@@ -156,7 +156,7 @@
                 console.error("Error getting documents: ", error);
             });
         }
-    
+
         document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
             event.preventDefault();
             var itemName = document.getElementById('itemName').value;
@@ -164,17 +164,17 @@
             var itemSellPrice = document.getElementById('indomieSellPrice').value;
             var itemStock = document.getElementById('indomieStock').value;
             var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
-    
+
             addIndomieToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
-    
+
             document.getElementById('indomieStockForm').reset();
         });
-    
+
         document.getElementById('btnBack').addEventListener('click', function(event) {
             event.preventDefault();
             window.history.back();
         });
-    
+
         // Load initial data when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             displayStockFromFirestore();
