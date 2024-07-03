@@ -31,6 +31,7 @@
         th {
             background-color: #f2f2f2;
         }
+
         .delete-btn {
             background-color: #f44336;
             color: white;
@@ -104,12 +105,12 @@
             </div>
         </form>
     </div>
-    
+
     <!-- Firebase Modular SDK (v9.x.x) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
-    
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
+
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
@@ -175,7 +176,7 @@
             deleteDoc(doc(db, "indomieStock", docId))
             .then(() => {
                 console.log("Document successfully deleted!");
-                displayStockFromFirestore(); 
+                displayStockFromFirestore();
             })
             .catch((error) => {
                 console.error("Error removing document: ", error);
@@ -204,7 +205,7 @@
         function setLoggedInUI(username) {
             displayStockFromFirestore();
         }
-    
+
         // Save and load data to/from localStorage
         window.addEventListener('beforeunload', () => {
             // Save data to localStorage
@@ -222,7 +223,7 @@
             });
             localStorage.setItem('stockData', JSON.stringify(stockData));
         });
-    
+
         window.addEventListener('load', () => {
             // Load data from localStorage
             const storedData = localStorage.getItem('stockData');
@@ -241,8 +242,8 @@
                 });
             }
         });
-    
+
     </script>
-    
+
 </body>
 </html>
