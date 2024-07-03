@@ -6,11 +6,12 @@ function setLoggedInUI(username) {
     currentUser = username;
 
     document.getElementById('loginSection').style.display = 'none';
-
     document.getElementById('profileTab').style.display = 'block';
     document.getElementById('loggedInUser').textContent = username;
-
     document.getElementById('selectionSection').style.display = 'block';
+
+    // Load initial data when user logs in
+    displayStockFromFirestore();
 }
 
 function logout() {
@@ -18,10 +19,31 @@ function logout() {
     currentUser = '';
 
     document.getElementById('profileTab').style.display = 'none';
-
     document.getElementById('selectionSection').style.display = 'none';
-
     document.getElementById('loginSection').style.display = 'block';
+}
+
+function displayStockFromFirestore() {
+    var tableBody = document.getElementById('stockTableBody');
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    getDocs(collection(db, "indomieStock"))
+    .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            var data = doc.data();
+            var row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${data.name}</td>
+                <td>${data.quantity}</td>
+                <td>${data.buyPrice}</td>
+                <td>${data.sellPrice}</td>
+                <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
+            `;
+        });
+    })
+    .catch((error) => {
+        console.error("Error getting documents: ", error);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
