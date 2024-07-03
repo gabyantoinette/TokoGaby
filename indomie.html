@@ -32,7 +32,7 @@
             background-color: #f2f2f2;
         }
 
-        .delete-btn {
+        .delete-btn, .add-stock-btn {
             background-color: #f44336;
             color: white;
             border: none;
@@ -106,6 +106,23 @@
                 <button type="submit">Catat Pengeluaran Stok</button>
             </div>
         </form>
+
+        <form id="indomieAddStockForm">
+            <h2>Tambah Stok Indomie</h2>
+            <div class="form-group">
+                <label for="addStockItemName">Nama Barang:</label>
+                <select id="addStockItemName" name="addStockItemName" required>
+                    <!-- Options will be dynamically added here -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="addStockQuantity">Jumlah yang Ditambahkan:</label>
+                <input type="number" id="addStockQuantity" name="addStockQuantity" required>
+            </div>
+            <div class="form-group">
+                <button type="submit">Tambah Stok</button>
+            </div>
+        </form>
     </div>
 
     <!-- Firebase Modular SDK (v9.x.x) -->
@@ -139,7 +156,7 @@
             .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
                 displayStockFromFirestore(); // Update table after adding new item
-                loadItemNames(); // Reload item names for outgoing form dropdown
+                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
@@ -154,6 +171,7 @@
             .then(() => {
                 console.log("Document successfully updated!");
                 displayStockFromFirestore(); // Update table after updating stock
+                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error updating document: ", error);
@@ -165,7 +183,7 @@
             .then(() => {
                 console.log("Document successfully deleted!");
                 displayStockFromFirestore(); // Update table after deleting item
-                loadItemNames(); // Reload item names for outgoing form dropdown
+                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error removing document: ", error);
@@ -187,19 +205,30 @@
                         <td>${data.buyPrice}</td>
                         <td>${data.sellPrice}</td>
                         <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
-                        <td><button class="delete-btn" data-id="${doc.id}">Delete</button></td>
+                        <td>
+                            <button class="delete-btn" data-id="${doc.id}">Delete</button>
+                            <button class="add-stock-btn" data-id="${doc.id}">Add Stock</button>
+                        </td>
                     `;
 
-                    // Tambahkan warna kuning jika stok kurang dari 10
+                    // Add event listener for delete button
+                    row.querySelector('.delete-btn').addEventListener('click', function() {
+                        deleteIndomieFromFirestore(doc.id);
+                    });
+
+                    // Add event listener for add stock button
+                    row.querySelector('.add-stock-btn').addEventListener('click', function() {
+                        var addStockQuantity = prompt(`Masukkan jumlah stok tambahan untuk ${data.name}:`);
+                        if (addStockQuantity !== null) {
+                            var newQuantity = parseInt(data.quantity) + parseInt(addStockQuantity);
+                            updateStockInFirestore(doc.id, newQuantity);
+                        }
+                    });
+
+                    // Highlight low stock items
                     if (data.quantity < 10) {
                         row.classList.add('low-stock');
                     }
-
-                    var deleteButton = row.querySelector('.delete-btn');
-                    deleteButton.addEventListener('click', function() {
-                        var docId = deleteButton.getAttribute('data-id');
-                        deleteIndomieFromFirestore(docId);
-                    });
                 });
             })
             .catch((error) => {
@@ -208,17 +237,23 @@
         }
 
         function loadItemNames() {
+            var selectOutgoingItem = document.getElementById('outgoingItemName');
+            var selectAddStockItem = document.getElementById('addStockItemName');
+            selectOutgoingItem.innerHTML = ''; // Clear existing options
+            selectAddStockItem.innerHTML = ''; // Clear existing options
+
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
-                const select = document.getElementById('outgoingItemName');
-                select.innerHTML = ''; // Clear existing options
-
                 querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const option = document.createElement('option');
-                    option.value = data.name;
-                    option.textContent = data.name;
-                    select.appendChild(option);
+                    var data = doc.data();
+                    var optionOutgoing = document.createElement('option');
+                    var optionAddStock = document.createElement('option');
+                    optionOutgoing.value = data.name;
+                    optionOutgoing.textContent = data.name;
+                    optionAddStock.value = data.name;
+                    optionAddStock.textContent = data.name;
+                    selectOutgoingItem.appendChild(optionOutgoing);
+                    selectAddStockItem.appendChild(optionAddStock);
                 });
             })
             .catch((error) => {
@@ -226,55 +261,81 @@
             });
         }
 
-        document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
-            event.preventDefault();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
+                event.preventDefault();
 
-            var itemName = document.getElementById('itemName').value;
-            var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
-            var itemSellPrice = document.getElementById('indomieSellPrice').value;
-            var itemStock = document.getElementById('indomieStock').value;
-            var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
+                var itemName = document.getElementById('itemName').value;
+                var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
+                var itemSellPrice = document.getElementById('indomieSellPrice').value;
+                var itemStock = document.getElementById('indomieStock').value;
+                var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
 
-            addIndomieToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
+                addIndomieToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
 
-            document.getElementById('indomieStockForm').reset();
-        });
-
-        document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-
-            var itemName = document.getElementById('outgoingItemName').value;
-            var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
-
-            getDocs(collection(db, "indomieStock"))
-            .then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    var data = doc.data();
-                    if (data.name === itemName) {
-                        var currentStock = data.quantity;
-                        if (outgoingQuantity > currentStock) {
-                            alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
-                            return;
-                        }
-
-                        var newQuantity = currentStock - outgoingQuantity;
-                        updateStockInFirestore(doc.id, newQuantity);
-
-                        console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
-                    }
-                });
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
+                document.getElementById('indomieStockForm').reset();
             });
-        });
 
-        document.getElementById('btnBack').addEventListener('click', function() {
-            window.history.back();
-        });
+            document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
+                event.preventDefault();
 
-        displayStockFromFirestore(); // Panggil fungsi untuk menampilkan stok saat halaman dimuat
-        loadItemNames(); // Panggil fungsi untuk memuat nama barang ke dalam dropdown
+                var itemName = document.getElementById('outgoingItemName').value;
+                var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
+
+                getDocs(collection(db, "indomieStock"))
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        var data = doc.data();
+                        if (data.name === itemName) {
+                            var currentStock = data.quantity;
+                            if (outgoingQuantity > currentStock) {
+                                alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
+                                return;
+                            }
+
+                            var newQuantity = currentStock - outgoingQuantity;
+                            updateStockInFirestore(doc.id, newQuantity);
+
+                            console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
+                        }
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error getting documents: ", error);
+                });
+            });
+
+            document.getElementById('indomieAddStockForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                var itemName = document.getElementById('addStockItemName').value;
+                var addStockQuantity = parseInt(document.getElementById('addStockQuantity').value);
+
+                getDocs(collection(db, "indomieStock"))
+                .then((querySnapshot) => {
+                    querySnapshot.forEach((doc) => {
+                        var data = doc.data();
+                        if (data.name === itemName) {
+                            var currentStock = data.quantity;
+                            var newQuantity = currentStock + addStockQuantity;
+                            updateStockInFirestore(doc.id, newQuantity);
+
+                            console.log(`Stok ditambahkan untuk: ${itemName}, Jumlah tambahan: ${addStockQuantity}`);
+                        }
+                    });
+                })
+                .catch((error) => {
+                    console.error("Error getting documents: ", error);
+                });
+            });
+
+            document.getElementById('btnBack').addEventListener('click', function() {
+                window.history.back();
+            });
+
+            displayStockFromFirestore(); // Panggil fungsi untuk menampilkan stok saat halaman dimuat
+            loadItemNames(); // Panggil fungsi untuk memuat nama barang ke dalam dropdown
+        });
     </script>
 </body>
 </html>
