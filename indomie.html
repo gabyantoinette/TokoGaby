@@ -111,7 +111,7 @@
     <!-- Firebase Modular SDK (v9.x.x) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js';
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, FieldValue } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -131,7 +131,7 @@
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             addDoc(collection(db, "indomieStock"), {
                 name: itemName,
-                quantity: itemQuantity,
+                quantity: parseInt(itemQuantity), // Pastikan kuantitas berupa angka
                 buyPrice: itemBuyPrice,
                 sellPrice: itemSellPrice,
                 expiryDate: itemExpiryDate
@@ -142,6 +142,31 @@
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
+            });
+        }
+
+        function updateStockInFirestore(docId, newQuantity) {
+            const itemRef = doc(db, "indomieStock", docId);
+            updateDoc(itemRef, {
+                quantity: newQuantity
+            })
+            .then(() => {
+                console.log("Document successfully updated!");
+                displayStockFromFirestore(); // Update table after updating stock
+            })
+            .catch((error) => {
+                console.error("Error updating document: ", error);
+            });
+        }
+
+        function deleteIndomieFromFirestore(docId) {
+            deleteDoc(doc(db, "indomieStock", docId))
+            .then(() => {
+                console.log("Document successfully deleted!");
+                displayStockFromFirestore(); // Update table after deleting item
+            })
+            .catch((error) => {
+                console.error("Error removing document: ", error);
             });
         }
 
@@ -180,33 +205,9 @@
             });
         }
 
-        function deleteIndomieFromFirestore(docId) {
-            deleteDoc(doc(db, "indomieStock", docId))
-            .then(() => {
-                console.log("Document successfully deleted!");
-                displayStockFromFirestore();
-            })
-            .catch((error) => {
-                console.error("Error removing document: ", error);
-            });
-        }
-
-        function updateStockInFirestore(itemName, newQuantity) {
-            const itemRef = doc(db, "indomieStock", itemName);
-            updateDoc(itemRef, {
-                quantity: newQuantity
-            })
-            .then(() => {
-                console.log("Document successfully updated!");
-                displayStockFromFirestore(); // Update table after updating stock
-            })
-            .catch((error) => {
-                console.error("Error updating document: ", error);
-            });
-        }
-
         document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
             event.preventDefault();
+
             var itemName = document.getElementById('itemName').value;
             var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
             var itemSellPrice = document.getElementById('indomieSellPrice').value;
@@ -220,26 +221,25 @@
 
         document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
             event.preventDefault();
+
             var itemName = document.getElementById('outgoingItemName').value;
             var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
 
-            // Validasi jumlah yang keluar tidak boleh lebih dari stok yang ada
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     var data = doc.data();
                     if (data.name === itemName) {
+                        var docId = doc.id; // Dapatkan ID dokumen
                         var currentStock = data.quantity;
                         if (outgoingQuantity > currentStock) {
                             alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
                             return;
                         }
 
-                        // Kurangi stok di Firestore
                         var newQuantity = currentStock - outgoingQuantity;
-                        updateStockInFirestore(itemName, newQuantity);
+                        updateStockInFirestore(docId, newQuantity);
 
-                        // Log untuk simulasi
                         console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
                     }
                 });
@@ -249,82 +249,13 @@
             });
         });
 
-        document.getElementById('btnBack').addEventListener('click', function(event) {
-            event.preventDefault();
+        // Event listener untuk tombol "Back"
+        document.getElementById('btnBack').addEventListener('click', function() {
             window.history.back();
         });
 
-        // Load initial data when user logs in
-        function setLoggedInUI(username) {
-            displayStockFromFirestore();
-        }
-
-        // Save and load data to/from localStorage
-        window.addEventListener('beforeunload', () => {
-            // Save data to localStorage
-            const tableRows = document.querySelectorAll('#stockTableBody tr');
-            const stockData = [];
-            tableRows.forEach(row => {
-                const rowData = {
-                    name: row.cells[0].textContent,
-                    quantity: row.cells[1].textContent,
-                    buyPrice: row.cells[2].textContent,
-                    sellPrice: row.cells[3].textContent,
-                    expiryDate: row.cells[4].textContent
-                };
-                stockData.push(rowData);
-            });
-            localStorage.setItem('stockData', JSON.stringify(stockData));
-        });
-
-        window.addEventListener('load', () => {
-            // Load data from localStorage
-            const storedData = localStorage.getItem('stockData');
-            if (storedData) {
-                const stockData = JSON.parse(storedData);
-                const tableBody = document.getElementById('stockTableBody');
-                stockData.forEach(data => {
-                    const row = tableBody.insertRow();
-                    row.innerHTML = `
-                        <td>${data.name}</td>
-                        <td>${data.quantity}</td>
-                        <td>${data.buyPrice}</td>
-                        <td>${data.sellPrice}</td>
-                        <td>${data.expiryDate}</td>
-                    `;
-
-                    // Tambahkan warna kuning jika stok kurang dari 10
-                    if (parseInt(data.quantity) < 10) {
-                        row.classList.add('low-stock');
-                    }
-                });
-            }
-        });
-
-        // Load item names for outgoing form dropdown
-        function loadItemNames() {
-            getDocs(collection(db, "indomieStock"))
-            .then((querySnapshot) => {
-                const select = document.getElementById('outgoingItemName');
-                select.innerHTML = ''; // Clear existing options
-
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const option = document.createElement('option');
-                    option.value = data.name;
-                    option.textContent = data.name;
-                    select.appendChild(option);
-                });
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
-            });
-        }
-
-        // Call function to load item names for outgoing form dropdown
-        loadItemNames();
-
+        // Panggil fungsi untuk menampilkan stok dari Firestore saat halaman dimuat
+        displayStockFromFirestore();
     </script>
-
 </body>
 </html>
