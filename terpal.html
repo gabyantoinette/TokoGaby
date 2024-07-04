@@ -166,7 +166,10 @@
                         <td>${data.transactionDate}</td>
                         <td>${data.deliveryDate}</td>
                         <td>
-                            <input type="checkbox" class="paid-checkbox" data-id="${doc.id}" ${data.paid ? 'checked' : ''}>
+                            <label>
+                                <input type="checkbox" class="paid-checkbox" data-id="${doc.id}" ${data.paid ? 'checked' : ''}>
+                                Sudah Bayar
+                            </label>
                             <button class="delete-btn" data-id="${doc.id}">Delete</button>
                         </td>
                     `;
