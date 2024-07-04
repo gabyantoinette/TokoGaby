@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencatatan Stok Terpal</title>
+    <title>Pencatatan Transaksi Terpal</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .btn-back {
@@ -32,7 +32,7 @@
             background-color: #f2f2f2;
         }
 
-        .delete-btn, .add-stock-btn {
+        .delete-btn {
             background-color: #f44336;
             color: white;
             border: none;
@@ -51,7 +51,7 @@
         <h1>Pencatatan Stok Terpal</h1>
         <form id="terpalStockForm">
             <div class="form-group">
-                <label for="itemName">Nama Barang:</label>
+                <label for="itemName">Jenis Barang:</label>
                 <input type="text" id="itemName" name="itemName" required>
             </div>
             <div class="form-group">
@@ -63,12 +63,16 @@
                 <input type="number" id="terpalSellPrice" name="terpalSellPrice" required>
             </div>
             <div class="form-group">
-                <label for="terpalStock">Jumlah Stok:</label>
+                <label for="terpalStock">Jumlah Terjual:</label>
                 <input type="number" id="terpalStock" name="terpalStock" required>
             </div>
             <div class="form-group">
-                <label for="terpalExpiryDate">Tanggal Kadaluarsa:</label>
-                <input type="date" id="terpalExpiryDate" name="terpalExpiryDate" required>
+                <label for="transactionDate">Tanggal Transaksi:</label>
+                <input type="date" id="transactionDate" name="transactionDate" required>
+            </div>
+            <div class="form-group">
+                <label for="deliveryDate">Tanggal Pengiriman:</label>
+                <input type="date" id="deliveryDate" name="deliveryDate" required>
             </div>
             <div class="form-group">
                 <button type="submit">Tambahkan Stok Terpal</button>
@@ -78,51 +82,19 @@
         <table id="stockTable">
             <thead>
                 <tr>
-                    <th>Nama Barang</th>
-                    <th>Jumlah</th>
+                    <th>Jenis Barang</th>
+                    <th>Jumlah Terjual</th>
                     <th>Harga Beli</th>
                     <th>Harga Jual</th>
-                    <th>Stok dan Kadaluarsa</th>
+                    <th>Tanggal Transaksi</th>
+                    <th>Tanggal Pengiriman</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
             <tbody id="stockTableBody">
+                <!-- Data akan ditambahkan secara dinamis oleh JavaScript -->
             </tbody>
         </table>
-
-        <form id="terpalOutgoingForm">
-            <h2>Catat Pengeluaran Stok Terpal</h2>
-            <div class="form-group">
-                <label for="outgoingItemName">Nama Barang yang Keluar:</label>
-                <select id="outgoingItemName" name="outgoingItemName" required>
-                    <!-- Options will be dynamically added here -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="outgoingQuantity">Jumlah yang Keluar:</label>
-                <input type="number" id="outgoingQuantity" name="outgoingQuantity" required>
-            </div>
-            <div class="form-group">
-                <button type="submit">Catat Pengeluaran Stok</button>
-            </div>
-        </form>
-
-        <form id="terpalAddStockForm">
-            <h2>Tambah Stok Terpal</h2>
-            <div class="form-group">
-                <label for="addStockItemName">Nama Barang:</label>
-                <select id="addStockItemName" name="addStockItemName" required>
-                    <!-- Options will be dynamically added here -->
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="addStockQuantity">Jumlah yang Ditambahkan:</label>
-                <input type="number" id="addStockQuantity" name="addStockQuantity" required>
-            </div>
-            <div class="form-group">
-                <button type="submit">Tambah Stok</button>
-            </div>
-        </form>
     </div>
 
     <!-- Firebase Modular SDK (v9.x.x) -->
@@ -145,13 +117,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
+        function addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, transactionDate, deliveryDate) {
             addDoc(collection(db, "terpalStock"), {
                 name: itemName,
                 quantity: parseInt(itemQuantity),
                 buyPrice: itemBuyPrice,
                 sellPrice: itemSellPrice,
-                expiryDate: itemExpiryDate
+                transactionDate: transactionDate,
+                deliveryDate: deliveryDate
             })
             .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
@@ -160,21 +133,6 @@
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
-            });
-        }
-
-        function updateStockInFirestore(docId, newQuantity) {
-            const itemRef = doc(db, "terpalStock", docId);
-            updateDoc(itemRef, {
-                quantity: newQuantity
-            })
-            .then(() => {
-                console.log("Document successfully updated!");
-                displayStockFromFirestore();
-                loadItemNames();
-            })
-            .catch((error) => {
-                console.error("Error updating document: ", error);
             });
         }
 
@@ -204,10 +162,10 @@
                         <td>${data.quantity}</td>
                         <td>${data.buyPrice}</td>
                         <td>${data.sellPrice}</td>
-                        <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
+                        <td>${data.transactionDate}</td>
+                        <td>${data.deliveryDate}</td>
                         <td>
                             <button class="delete-btn" data-id="${doc.id}">Delete</button>
-                            <button class="add-stock-btn" data-id="${doc.id}">Add Stock</button>
                         </td>
                     `;
 
@@ -215,19 +173,6 @@
                         var docId = this.getAttribute('data-id');
                         deleteTerpalFromFirestore(docId);
                     });
-
-                    row.querySelector('.add-stock-btn').addEventListener('click', function() {
-                        var docId = this.getAttribute('data-id');
-                        var addStockQuantity = prompt("Masukkan jumlah stok yang akan ditambahkan:");
-                        if (addStockQuantity) {
-                            var newQuantity = data.quantity + parseInt(addStockQuantity);
-                            updateStockInFirestore(docId, newQuantity);
-                        }
-                    });
-
-                    if (data.quantity < 5) {
-                        row.classList.add('low-stock');
-                    }
                 });
             })
             .catch((error) => {
@@ -267,56 +212,13 @@
             var itemQuantity = document.getElementById('terpalStock').value;
             var itemBuyPrice = document.getElementById('terpalBuyPrice').value;
             var itemSellPrice = document.getElementById('terpalSellPrice').value;
-            var itemExpiryDate = document.getElementById('terpalExpiryDate').value;
-            addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate);
-        });
-
-        document.getElementById('terpalOutgoingForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var outgoingItemName = document.getElementById('outgoingItemName').value;
-            var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
-
-            getDocs(collection(db, "terpalStock"))
-            .then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    var data = doc.data();
-                    if (data.name === outgoingItemName) {
-                        if (data.quantity >= outgoingQuantity) {
-                            var newQuantity = data.quantity - outgoingQuantity;
-                            updateStockInFirestore(doc.id, newQuantity);
-                        } else {
-                            alert('Stok tidak mencukupi untuk pengeluaran ini.');
-                        }
-                    }
-                });
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
-            });
-        });
-
-        document.getElementById('terpalAddStockForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            var addStockItemName = document.getElementById('addStockItemName').value;
-            var addStockQuantity = parseInt(document.getElementById('addStockQuantity').value);
-
-            getDocs(collection(db, "terpalStock"))
-            .then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    var data = doc.data();
-                    if (data.name === addStockItemName) {
-                        var newQuantity = data.quantity + addStockQuantity;
-                        updateStockInFirestore(doc.id, newQuantity);
-                    }
-                });
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
-            });
+            var transactionDate = document.getElementById('transactionDate').value;
+            var deliveryDate = document.getElementById('deliveryDate').value;
+            addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, transactionDate, deliveryDate);
         });
 
         document.getElementById('btnBack').addEventListener('click', function() {
-                window.history.back();
+            window.history.back();
         });
 
         // Display initial data
