@@ -67,6 +67,10 @@
                 <input type="number" id="terpalStock" name="terpalStock" required>
             </div>
             <div class="form-group">
+                <label for="terpalExpiryDate">Tanggal Kadaluarsa:</label>
+                <input type="date" id="terpalExpiryDate" name="terpalExpiryDate" required>
+            </div>
+            <div class="form-group">
                 <button type="submit">Tambahkan Stok Terpal</button>
             </div>
         </form>
@@ -78,6 +82,7 @@
                     <th>Jumlah</th>
                     <th>Harga Beli</th>
                     <th>Harga Jual</th>
+                    <th>Stok dan Kadaluarsa</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -140,17 +145,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice) {
+        function addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             addDoc(collection(db, "terpalStock"), {
                 name: itemName,
-                quantity: parseInt(itemQuantity), // Pastikan kuantitas berupa angka
+                quantity: parseInt(itemQuantity),
                 buyPrice: itemBuyPrice,
-                sellPrice: itemSellPrice
+                sellPrice: itemSellPrice,
+                expiryDate: itemExpiryDate
             })
             .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
-                displayStockFromFirestore(); // Update table after adding new item
-                loadItemNames(); // Reload item names for dropdowns
+                displayStockFromFirestore();
+                loadItemNames();
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
@@ -164,8 +170,8 @@
             })
             .then(() => {
                 console.log("Document successfully updated!");
-                displayStockFromFirestore(); // Update table after updating stock
-                loadItemNames(); // Reload item names for dropdowns
+                displayStockFromFirestore();
+                loadItemNames();
             })
             .catch((error) => {
                 console.error("Error updating document: ", error);
@@ -176,8 +182,8 @@
             deleteDoc(doc(db, "terpalStock", docId))
             .then(() => {
                 console.log("Document successfully deleted!");
-                displayStockFromFirestore(); // Update table after deleting item
-                loadItemNames(); // Reload item names for dropdowns
+                displayStockFromFirestore();
+                loadItemNames();
             })
             .catch((error) => {
                 console.error("Error removing document: ", error);
@@ -186,7 +192,7 @@
 
         function displayStockFromFirestore() {
             var tableBody = document.getElementById('stockTableBody');
-            tableBody.innerHTML = ''; // Clear existing rows
+            tableBody.innerHTML = '';
 
             getDocs(collection(db, "terpalStock"))
             .then((querySnapshot) => {
@@ -198,28 +204,26 @@
                         <td>${data.quantity}</td>
                         <td>${data.buyPrice}</td>
                         <td>${data.sellPrice}</td>
+                        <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
                         <td>
                             <button class="delete-btn" data-id="${doc.id}">Delete</button>
                             <button class="add-stock-btn" data-id="${doc.id}">Add Stock</button>
                         </td>
                     `;
 
-                    // Add event listener for delete button
                     row.querySelector('.delete-btn').addEventListener('click', function() {
                         deleteTerpalFromFirestore(doc.id);
                     });
 
-                    // Add event listener for add stock button
                     row.querySelector('.add-stock-btn').addEventListener('click', function() {
                         var addStockQuantity = prompt(`Masukkan jumlah stok tambahan untuk ${data.name}:`);
                         if (addStockQuantity !== null) {
-                            var newQuantity = parseInt(data.quantity) + parseInt(addStockQuantity);
+                            var newQuantity = data.quantity + parseInt(addStockQuantity);
                             updateStockInFirestore(doc.id, newQuantity);
                         }
                     });
 
-                    // Highlight low stock items
-                    if (data.quantity < 10) {
+                    if (data.quantity < 5) {
                         row.classList.add('low-stock');
                     }
                 });
@@ -230,23 +234,24 @@
         }
 
         function loadItemNames() {
-            var selectOutgoingItem = document.getElementById('outgoingItemName');
-            var selectAddStockItem = document.getElementById('addStockItemName');
-            selectOutgoingItem.innerHTML = ''; // Clear existing options
-            selectAddStockItem.innerHTML = ''; // Clear existing options
+            var selectOutgoing = document.getElementById('outgoingItemName');
+            var selectAddStock = document.getElementById('addStockItemName');
+            selectOutgoing.innerHTML = '';
+            selectAddStock.innerHTML = '';
 
             getDocs(collection(db, "terpalStock"))
             .then((querySnapshot) => {
                 querySnapshot.forEach((doc) => {
                     var data = doc.data();
                     var optionOutgoing = document.createElement('option');
-                    var optionAddStock = document.createElement('option');
                     optionOutgoing.value = data.name;
                     optionOutgoing.textContent = data.name;
+                    selectOutgoing.appendChild(optionOutgoing);
+
+                    var optionAddStock = document.createElement('option');
                     optionAddStock.value = data.name;
                     optionAddStock.textContent = data.name;
-                    selectOutgoingItem.appendChild(optionOutgoing);
-                    selectAddStockItem.appendChild(optionAddStock);
+                    selectAddStock.appendChild(optionAddStock);
                 });
             })
             .catch((error) => {
@@ -254,80 +259,67 @@
             });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('terpalStockForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var itemName = document.getElementById('itemName').value;
-                var itemBuyPrice = document.getElementById('terpalBuyPrice').value;
-                var itemSellPrice = document.getElementById('terpalSellPrice').value;
-                var itemStock = document.getElementById('terpalStock').value;
-
-                addTerpalToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice);
-
-                document.getElementById('terpalStockForm').reset();
-            });
-
-            document.getElementById('terpalOutgoingForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var itemName = document.getElementById('outgoingItemName').value;
-                var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
-
-                getDocs(collection(db, "terpalStock"))
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        var data = doc.data();
-                        if (data.name === itemName) {
-                            var currentStock = data.quantity;
-                            if (outgoingQuantity > currentStock) {
-                                alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
-                                return;
-                            }
-
-                            var newQuantity = currentStock - outgoingQuantity;
-                            updateStockInFirestore(doc.id, newQuantity);
-
-                            console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting documents: ", error);
-                });
-            });
-
-            document.getElementById('terpalAddStockForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var itemName = document.getElementById('addStockItemName').value;
-                var addStockQuantity = parseInt(document.getElementById('addStockQuantity').value);
-
-                getDocs(collection(db, "terpalStock"))
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        var data = doc.data();
-                        if (data.name === itemName) {
-                            var currentStock = data.quantity;
-                            var newQuantity = currentStock + addStockQuantity;
-                            updateStockInFirestore(doc.id, newQuantity);
-
-                            console.log(`Stok ditambahkan untuk: ${itemName}, Jumlah tambahan: ${addStockQuantity}`);
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting documents: ", error);
-                });
-            });
-
-            document.getElementById('btnBack').addEventListener('click', function() {
-                window.history.back();
-            });
-
-            displayStockFromFirestore(); // Panggil fungsi untuk menampilkan stok saat halaman dimuat
-            loadItemNames(); // Panggil fungsi untuk memuat nama barang ke dalam dropdown
+        document.getElementById('terpalStockForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var itemName = document.getElementById('itemName').value;
+            var itemQuantity = document.getElementById('terpalStock').value;
+            var itemBuyPrice = document.getElementById('terpalBuyPrice').value;
+            var itemSellPrice = document.getElementById('terpalSellPrice').value;
+            var itemExpiryDate = document.getElementById('terpalExpiryDate').value;
+            addTerpalToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate);
         });
+
+        document.getElementById('terpalOutgoingForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var outgoingItemName = document.getElementById('outgoingItemName').value;
+            var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
+
+            getDocs(collection(db, "terpalStock"))
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    var data = doc.data();
+                    if (data.name === outgoingItemName) {
+                        if (data.quantity >= outgoingQuantity) {
+                            var newQuantity = data.quantity - outgoingQuantity;
+                            updateStockInFirestore(doc.id, newQuantity);
+                        } else {
+                            alert('Stok tidak mencukupi untuk pengeluaran ini.');
+                        }
+                    }
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
+            });
+        });
+
+        document.getElementById('terpalAddStockForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            var addStockItemName = document.getElementById('addStockItemName').value;
+            var addStockQuantity = parseInt(document.getElementById('addStockQuantity').value);
+
+            getDocs(collection(db, "terpalStock"))
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    var data = doc.data();
+                    if (data.name === addStockItemName) {
+                        var newQuantity = data.quantity + addStockQuantity;
+                        updateStockInFirestore(doc.id, newQuantity);
+                    }
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
+            });
+        });
+
+        document.getElementById('btnBack').addEventListener('click', function() {
+            window.location.href = "index.html";
+        });
+
+        // Display initial data
+        displayStockFromFirestore();
+        loadItemNames();
     </script>
 </body>
 </html>
