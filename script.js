@@ -27,7 +27,27 @@ function displayStockFromFirestore() {
     var tableBody = document.getElementById('stockTableBody');
     tableBody.innerHTML = ''; // Clear existing rows
 
+    // Load indomieStock data
     getDocs(collection(db, "indomieStock"))
+    .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+            var data = doc.data();
+            var row = tableBody.insertRow();
+            row.innerHTML = `
+                <td>${data.name}</td>
+                <td>${data.quantity}</td>
+                <td>${data.buyPrice}</td>
+                <td>${data.sellPrice}</td>
+                <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
+            `;
+        });
+    })
+    .catch((error) => {
+        console.error("Error getting documents: ", error);
+    });
+
+    // Load terpalStock data
+    getDocs(collection(db, "terpalStock"))
     .then((querySnapshot) => {
         querySnapshot.forEach((doc) => {
             var data = doc.data();
@@ -88,21 +108,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var stock = document.getElementById('indomieStock').value;
         var expiryDate = document.getElementById('indomieExpiryDate').value;
 
-        // Menambahkan baris baru ke tabel
-        var table = document.getElementById('stockTable').getElementsByTagName('tbody')[0];
-        var newRow = table.insertRow();
-
-        var cell1 = newRow.insertCell(0);
-        var cell2 = newRow.insertCell(1);
-        var cell3 = newRow.insertCell(2);
-        var cell4 = newRow.insertCell(3);
-        var cell5 = newRow.insertCell(4);
-
-        cell1.innerHTML = itemName;
-        cell2.innerHTML = stock;
-        cell3.innerHTML = buyPrice;
-        cell4.innerHTML = sellPrice;
-        cell5.innerHTML = stock + " pcs, Exp: " + expiryDate;
+        // Menambahkan data ke Firestore
+        addDoc(collection(db, "indomieStock"), {
+            name: itemName,
+            quantity: parseInt(stock),
+            buyPrice: buyPrice,
+            sellPrice: sellPrice,
+            expiryDate: expiryDate
+        })
+        .then((docRef) => {
+            console.log("Document written with ID: ", docRef.id);
+            displayStockFromFirestore();
+        })
+        .catch((error) => {
+            console.error("Error adding document: ", error);
+        });
 
         // Reset form setelah submit
         document.getElementById('indomieStockForm').reset();

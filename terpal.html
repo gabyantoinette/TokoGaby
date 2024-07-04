@@ -212,14 +212,16 @@
                     `;
 
                     row.querySelector('.delete-btn').addEventListener('click', function() {
-                        deleteTerpalFromFirestore(doc.id);
+                        var docId = this.getAttribute('data-id');
+                        deleteTerpalFromFirestore(docId);
                     });
 
                     row.querySelector('.add-stock-btn').addEventListener('click', function() {
-                        var addStockQuantity = prompt(`Masukkan jumlah stok tambahan untuk ${data.name}:`);
-                        if (addStockQuantity !== null) {
+                        var docId = this.getAttribute('data-id');
+                        var addStockQuantity = prompt("Masukkan jumlah stok yang akan ditambahkan:");
+                        if (addStockQuantity) {
                             var newQuantity = data.quantity + parseInt(addStockQuantity);
-                            updateStockInFirestore(doc.id, newQuantity);
+                            updateStockInFirestore(docId, newQuantity);
                         }
                     });
 
