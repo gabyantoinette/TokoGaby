@@ -32,7 +32,7 @@
             background-color: #f2f2f2;
         }
 
-        .delete-btn, .add-stock-btn {
+        .delete-btn, .add-stock-btn, .reduce-stock-btn {
             background-color: #f44336;
             color: white;
             border: none;
@@ -100,6 +100,7 @@
                 <button type="submit">Tambahkan Stok Indomie</button>
             </div>
         </form>
+
         <input type="text" id="searchBar" class="search-bar" placeholder="Cari Nama Barang">
         <table id="stockTable">
             <thead>
@@ -117,38 +118,6 @@
         </table>
 
         <div class="pagination" id="pagination"></div>
-
-        <form id="indomieOutgoingForm">
-            <h2>Catat Pengeluaran Stok Indomie</h2>
-            <div class="form-group">
-                <label for="outgoingItemName">Nama Barang yang Keluar:</label>
-                <select id="outgoingItemName" name="outgoingItemName" required>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="outgoingQuantity">Jumlah yang Keluar:</label>
-                <input type="number" id="outgoingQuantity" name="outgoingQuantity" required>
-            </div>
-            <div class="form-group">
-                <button type="submit">Catat Pengeluaran Stok</button>
-            </div>
-        </form>
-
-        <form id="indomieAddStockForm">
-            <h2>Tambah Stok Indomie</h2>
-            <div class="form-group">
-                <label for="addStockItemName">Nama Barang:</label>
-                <select id="addStockItemName" name="addStockItemName" required>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="addStockQuantity">Jumlah yang Ditambahkan:</label>
-                <input type="number" id="addStockQuantity" name="addStockQuantity" required>
-            </div>
-            <div class="form-group">
-                <button type="submit">Tambah Stok</button>
-            </div>
-        </form>
     </div>
 
     <script type="module">
@@ -184,7 +153,6 @@
             .then((docRef) => {
                 console.log("Document written with ID: ", docRef.id);
                 displayStockFromFirestore(); // Update table after adding new item
-                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error adding document: ", error);
@@ -199,7 +167,6 @@
             .then(() => {
                 console.log("Document successfully updated!");
                 displayStockFromFirestore(); // Update table after updating stock
-                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error updating document: ", error);
@@ -211,7 +178,6 @@
             .then(() => {
                 console.log("Document successfully deleted!");
                 displayStockFromFirestore(); // Update table after deleting item
-                loadItemNames(); // Reload item names for dropdowns
             })
             .catch((error) => {
                 console.error("Error removing document: ", error);
@@ -277,153 +243,85 @@
                 document.querySelectorAll('.add-stock-btn').forEach(button => {
                     button.addEventListener('click', () => {
                         let docId = button.getAttribute('data-id');
-                        let additionalStock = prompt('Masukkan jumlah stok yang ingin ditambahkan:');
-                        if (additionalStock && !isNaN(additionalStock)) {
+                        let additionAmount = prompt('Masukkan jumlah stok yang ingin ditambahkan:');
+                        if (additionAmount && !isNaN(additionAmount)) {
                             let currentStock = stocks.find(stock => stock.id === docId).quantity;
-                            updateStockInFirestore(docId, currentStock + parseInt(additionalStock));
+                            updateStockInFirestore(docId, currentStock + parseInt(additionAmount));
                         } else {
                             alert('Mohon masukkan angka yang valid.');
                         }
                     });
                 });
 
-                // Load item names into dropdowns
-                loadItemNames();
+                // Add reduce stock button event listeners
+                document.querySelectorAll('.reduce-stock-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        let docId = button.getAttribute('data-id');
+                        let reductionAmount = prompt('Masukkan jumlah stok yang ingin dikurangi:');
+                        if (reductionAmount && !isNaN(reductionAmount)) {
+                            let currentStock = stocks.find(stock => stock.id === docId).quantity;
+                            if (currentStock >= reductionAmount) {
+                                updateStockInFirestore(docId, currentStock - parseInt(reductionAmount));
+                            } else {
+                                alert('Jumlah stok tidak mencukupi untuk pengurangan.');
+                            }
+                        } else {
+                            alert('Mohon masukkan angka yang valid.');
+                        }
+                    });
+                });
+            })
+            .catch((error) => {
+                console.error("Error getting documents: ", error);
             });
         }
 
         function displayPagination(totalPages) {
-            const paginationDiv = document.getElementById('pagination');
-            paginationDiv.innerHTML = ''; // Clear existing pagination buttons
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
 
             for (let i = 1; i <= totalPages; i++) {
                 const button = document.createElement('button');
-                button.textContent = i;
-                button.classList.toggle('active', i === currentPage);
+                button.innerText = i;
+                if (i === currentPage) {
+                    button.classList.add('active');
+                }
                 button.addEventListener('click', () => {
                     currentPage = i;
                     displayStockFromFirestore();
                 });
-                paginationDiv.appendChild(button);
+                pagination.appendChild(button);
             }
         }
 
-        // Handle form submission for adding stock
-        document.getElementById('indomieStockForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            let itemName = document.getElementById('itemName').value;
-            let itemQuantity = document.getElementById('indomieStock').value;
-            let itemBuyPrice = document.getElementById('indomieBuyPrice').value;
-            let itemSellPrice = document.getElementById('indomieSellPrice').value;
-            let itemExpiryDate = document.getElementById('indomieExpiryDate').value;
+        // Load initial data
+        displayStockFromFirestore();
 
-            addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate);
-            document.getElementById('indomieStockForm').reset(); // Reset form
-        });
-
-        // Handle form submission for outgoing stock
-        document.getElementById('indomieOutgoingForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            let itemName = document.getElementById('outgoingItemName').value;
-            let outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
-
-            let selectedItem = stocks.find(stock => stock.name === itemName);
-            if (selectedItem && selectedItem.quantity >= outgoingQuantity) {
-                updateStockInFirestore(selectedItem.id, selectedItem.quantity - outgoingQuantity);
-            } else {
-                alert('Jumlah stok tidak mencukupi atau barang tidak ditemukan.');
-            }
-
-            document.getElementById('indomieOutgoingForm').reset(); // Reset form
-        });
-
-        // Handle form submission for adding stock
-        document.getElementById('indomieAddStockForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            let itemName = document.getElementById('addStockItemName').value;
-            let additionalStock = parseInt(document.getElementById('addStockQuantity').value);
-
-            let selectedItem = stocks.find(stock => stock.name === itemName);
-            if (selectedItem) {
-                updateStockInFirestore(selectedItem.id, selectedItem.quantity + additionalStock);
-            } else {
-                alert('Barang tidak ditemukan.');
-            }
-
-            document.getElementById('indomieAddStockForm').reset(); // Reset form
-        });
-
-        // Load item names into dropdowns for outgoing stock and adding stock forms
-        function loadItemNames() {
-            var selectOutgoingItem = document.getElementById('outgoingItemName');
-            var selectAddStockItem = document.getElementById('addStockItemName');
-            selectOutgoingItem.innerHTML = ''; // Clear existing options
-            selectAddStockItem.innerHTML = ''; // Clear existing options
-
-            // Sort stocks by quantity in descending order
-            stocks.sort((a, b) => b.quantity - a.quantity);
-
-            stocks.forEach((data) => {
-                var optionOutgoing = document.createElement('option');
-                var optionAddStock = document.createElement('option');
-                optionOutgoing.value = data.name;
-                optionOutgoing.textContent = `${data.name} (${data.quantity})`; // Optional: add quantity to option text
-                optionAddStock.value = data.name;
-                optionAddStock.textContent = `${data.name} (${data.quantity})`; // Optional: add quantity to option text
-                selectOutgoingItem.appendChild(optionOutgoing);
-                selectAddStockItem.appendChild(optionAddStock);
-            });
-        }
-
-
-        // Event listener for search bar input
-        document.getElementById('searchBar').addEventListener('input', () => {
-            currentPage = 1; // Reset to first page when searching
-            displayStockFromFirestore();
-        });
-
-        // Event listener for back button
+        // Add event listener to the Back button
         document.getElementById('btnBack').addEventListener('click', () => {
             window.history.back();
         });
 
-        // Handle form submission for reducing stock
-        document.getElementById('indomieReduceStockForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            let itemName = document.getElementById('reduceStockItemName').value;
-            let reduceQuantity = parseInt(document.getElementById('reduceStockQuantity').value);
+        // Form submission for adding new stock
+        document.getElementById('indomieStockForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const itemName = document.getElementById('itemName').value.trim();
+            const itemBuyPrice = document.getElementById('indomieBuyPrice').value.trim();
+            const itemSellPrice = document.getElementById('indomieSellPrice').value.trim();
+            const itemQuantity = document.getElementById('indomieStock').value.trim();
+            const itemExpiryDate = document.getElementById('indomieExpiryDate').value.trim();
 
-            let selectedItem = stocks.find(stock => stock.name === itemName);
-            if (selectedItem && selectedItem.quantity >= reduceQuantity) {
-                updateStockInFirestore(selectedItem.id, selectedItem.quantity - reduceQuantity);
-            } else {
-                alert('Jumlah stok tidak mencukupi atau barang tidak ditemukan.');
-            }
+            addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate);
 
-            document.getElementById('indomieReduceStockForm').reset(); // Reset form
+            // Reset form fields after submission
+            document.getElementById('indomieStockForm').reset();
         });
 
-        // Event listener for reduce stock button
-        document.querySelectorAll('.reduce-stock-btn').forEach(button => {
-            button.addEventListener('click', () => {
-                let docId = button.getAttribute('data-id');
-                let reduceStockQuantity = prompt('Masukkan jumlah stok yang ingin dikurangi:');
-                if (reduceStockQuantity && !isNaN(reduceStockQuantity)) {
-                    let currentStock = stocks.find(stock => stock.id === docId).quantity;
-                    if (currentStock >= parseInt(reduceStockQuantity)) {
-                        updateStockInFirestore(docId, currentStock - parseInt(reduceStockQuantity));
-                    } else {
-                        alert('Stok tidak mencukupi.');
-                    }
-                } else {
-                    alert('Masukkan angka yang valid.');
-                }
-            });
+        // Search bar functionality
+        document.getElementById('searchBar').addEventListener('input', () => {
+            currentPage = 1; // Reset current page when searching
+            displayStockFromFirestore();
         });
-
-
-        // Initial load
-        displayStockFromFirestore();
     </script>
 </body>
 </html>
