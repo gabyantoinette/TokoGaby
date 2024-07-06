@@ -243,9 +243,10 @@
                 const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
                 const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
                 const endIndex = startIndex + ITEMS_PER_PAGE;
-                const itemsToDisplay = filteredStocks.slice(startIndex, endIndex);
+                const paginatedStocks = filteredStocks.slice(startIndex, endIndex);
 
-                itemsToDisplay.forEach((data) => {
+                // Display stocks in the table
+                paginatedStocks.forEach((data) => {
                     var row = tableBody.insertRow();
                     row.innerHTML = `
                         <td>${data.name}</td>
@@ -284,6 +285,9 @@
                         }
                     });
                 });
+
+                // Load item names into dropdowns
+                loadItemNames();
             });
         }
 
@@ -350,20 +354,26 @@
 
         // Load item names into dropdowns for outgoing stock and adding stock forms
         function loadItemNames() {
-            const outgoingItemNameSelect = document.getElementById('outgoingItemName');
-            const addStockItemNameSelect = document.getElementById('addStockItemName');
+            var selectOutgoingItem = document.getElementById('outgoingItemName');
+            var selectAddStockItem = document.getElementById('addStockItemName');
+            selectOutgoingItem.innerHTML = ''; // Clear existing options
+            selectAddStockItem.innerHTML = ''; // Clear existing options
 
-            outgoingItemNameSelect.innerHTML = ''; // Clear existing options
-            addStockItemNameSelect.innerHTML = ''; // Clear existing options
+            // Sort stocks by quantity in descending order
+            stocks.sort((a, b) => b.quantity - a.quantity);
 
-            stocks.forEach(stock => {
-                const option = document.createElement('option');
-                option.value = stock.name;
-                option.textContent = stock.name;
-                outgoingItemNameSelect.appendChild(option);
-                addStockItemNameSelect.appendChild(option);
+            stocks.forEach((data) => {
+                var optionOutgoing = document.createElement('option');
+                var optionAddStock = document.createElement('option');
+                optionOutgoing.value = data.name;
+                optionOutgoing.textContent = `${data.name} (${data.quantity})`; // Optional: add quantity to option text
+                optionAddStock.value = data.name;
+                optionAddStock.textContent = `${data.name} (${data.quantity})`; // Optional: add quantity to option text
+                selectOutgoingItem.appendChild(optionOutgoing);
+                selectAddStockItem.appendChild(optionAddStock);
             });
         }
+
 
         // Event listener for search bar input
         document.getElementById('searchBar').addEventListener('input', () => {
