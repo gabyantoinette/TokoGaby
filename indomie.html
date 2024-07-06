@@ -257,6 +257,7 @@
                         <td>
                             <button class="delete-btn" data-id="${data.id}">Delete</button>
                             <button class="add-stock-btn" data-id="${data.id}">Tambah Stok</button>
+                            <button class="reduce-stock-btn" data-id="${data.id}">Kurangi Stok</button>
                         </td>
                     `;
                 });
@@ -385,6 +386,41 @@
         document.getElementById('btnBack').addEventListener('click', () => {
             window.history.back();
         });
+
+        // Handle form submission for reducing stock
+        document.getElementById('indomieReduceStockForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let itemName = document.getElementById('reduceStockItemName').value;
+            let reduceQuantity = parseInt(document.getElementById('reduceStockQuantity').value);
+
+            let selectedItem = stocks.find(stock => stock.name === itemName);
+            if (selectedItem && selectedItem.quantity >= reduceQuantity) {
+                updateStockInFirestore(selectedItem.id, selectedItem.quantity - reduceQuantity);
+            } else {
+                alert('Jumlah stok tidak mencukupi atau barang tidak ditemukan.');
+            }
+
+            document.getElementById('indomieReduceStockForm').reset(); // Reset form
+        });
+
+        // Event listener for reduce stock button
+        document.querySelectorAll('.reduce-stock-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                let docId = button.getAttribute('data-id');
+                let reduceStockQuantity = prompt('Masukkan jumlah stok yang ingin dikurangi:');
+                if (reduceStockQuantity && !isNaN(reduceStockQuantity)) {
+                    let currentStock = stocks.find(stock => stock.id === docId).quantity;
+                    if (currentStock >= parseInt(reduceStockQuantity)) {
+                        updateStockInFirestore(docId, currentStock - parseInt(reduceStockQuantity));
+                    } else {
+                        alert('Stok tidak mencukupi.');
+                    }
+                } else {
+                    alert('Masukkan angka yang valid.');
+                }
+            });
+        });
+
 
         // Initial load
         displayStockFromFirestore();
