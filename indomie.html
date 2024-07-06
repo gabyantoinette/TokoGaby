@@ -43,6 +43,25 @@
         .low-stock {
             background-color: yellow;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            background-color: #f0f0f0;
+            border: none;
+            padding: 8px 16px;
+            margin: 0 2px;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background-color: #007bff;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +108,8 @@
             <tbody id="stockTableBody">
             </tbody>
         </table>
+
+        <div class="pagination" id="pagination"></div>
 
         <form id="indomieOutgoingForm">
             <h2>Catat Pengeluaran Stok Indomie</h2>
@@ -145,6 +166,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        const ITEMS_PER_PAGE = 5; // Jumlah item per halaman
+        let currentPage = 1; // Halaman saat ini
+
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             addDoc(collection(db, "indomieStock"), {
                 name: itemName,
@@ -196,8 +220,24 @@
 
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
+                let stocks = [];
                 querySnapshot.forEach((doc) => {
-                    var data = doc.data();
+                    let data = doc.data();
+                    data.id = doc.id; // Add the document ID to the data
+                    stocks.push(data);
+                });
+
+                // Sort stocks by quantity in descending order
+                stocks.sort((a, b) => b.quantity - a.quantity);
+
+                // Pagination logic
+                const totalItems = stocks.length;
+                const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+                const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+                const endIndex = startIndex + ITEMS_PER_PAGE;
+                const itemsToDisplay = stocks.slice(startIndex, endIndex);
+
+                itemsToDisplay.forEach((data) => {
                     var row = tableBody.insertRow();
                     row.innerHTML = `
                         <td>${data.name}</td>
@@ -206,14 +246,14 @@
                         <td>${data.sellPrice}</td>
                         <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
                         <td>
-                            <button class="delete-btn" data-id="${doc.id}">Delete</button>
-                            <button class="add-stock-btn" data-id="${doc.id}">Add Stock</button>
+                            <button class="delete-btn" data-id="${data.id}">Delete</button>
+                            <button class="add-stock-btn" data-id="${data.id}">Add Stock</button>
                         </td>
                     `;
 
                     // Add event listener for delete button
                     row.querySelector('.delete-btn').addEventListener('click', function() {
-                        deleteIndomieFromFirestore(doc.id);
+                        deleteIndomieFromFirestore(data.id);
                     });
 
                     // Add event listener for add stock button
@@ -221,7 +261,7 @@
                         var addStockQuantity = prompt(`Masukkan jumlah stok tambahan untuk ${data.name}:`);
                         if (addStockQuantity !== null) {
                             var newQuantity = parseInt(data.quantity) + parseInt(addStockQuantity);
-                            updateStockInFirestore(doc.id, newQuantity);
+                            updateStockInFirestore(data.id, newQuantity);
                         }
                     });
 
@@ -230,6 +270,23 @@
                         row.classList.add('low-stock');
                     }
                 });
+
+                // Update pagination
+                var pagination = document.getElementById('pagination');
+                pagination.innerHTML = '';
+
+                for (let i = 1; i <= totalPages; i++) {
+                    const button = document.createElement('button');
+                    button.textContent = i;
+                    if (i === currentPage) {
+                        button.classList.add('active');
+                    }
+                    button.addEventListener('click', function() {
+                        currentPage = i;
+                        displayStockFromFirestore();
+                    });
+                    pagination.appendChild(button);
+                }
             })
             .catch((error) => {
                 console.error("Error getting documents: ", error);
