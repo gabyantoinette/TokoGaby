@@ -156,13 +156,13 @@
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
 
         const firebaseConfig = {
-            apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
-            authDomain: "tokogaby-176b7.firebaseapp.com",
-            projectId: "tokogaby-176b7",
-            storageBucket: "tokogaby-176b7.appspot.com",
-            messagingSenderId: "723540448286",
-            appId: "1:723540448286:web:1938615ce97d4450920a0f",
-            measurementId: "G-F4KL2E0JQY"
+            apiKey: "API_KEY",
+            authDomain: "PROJECT_ID.firebaseapp.com",
+            projectId: "PROJECT_ID",
+            storageBucket: "PROJECT_ID.appspot.com",
+            messagingSenderId: "SENDER_ID",
+            appId: "APP_ID",
+            measurementId: "G-MEASUREMENT_ID"
         };
 
         // Initialize Firebase
@@ -249,163 +249,135 @@
                     var row = tableBody.insertRow();
                     row.innerHTML = `
                         <td>${data.name}</td>
-                        <td>${data.quantity}</td>
+                        <td ${data.quantity < 10 ? 'class="low-stock"' : ''}>${data.quantity}</td>
                         <td>${data.buyPrice}</td>
                         <td>${data.sellPrice}</td>
-                        <td>${data.quantity} pcs, Exp: ${data.expiryDate}</td>
+                        <td>${data.quantity} / ${data.expiryDate}</td>
                         <td>
                             <button class="delete-btn" data-id="${data.id}">Delete</button>
-                            <button class="add-stock-btn" data-id="${data.id}">Add Stock</button>
+                            <button class="add-stock-btn" data-id="${data.id}">Tambah Stok</button>
                         </td>
                     `;
-
-                    // Add event listener for delete button
-                    row.querySelector('.delete-btn').addEventListener('click', function() {
-                        deleteIndomieFromFirestore(data.id);
-                    });
-
-                    // Add event listener for add stock button
-                    row.querySelector('.add-stock-btn').addEventListener('click', function() {
-                        var addStockQuantity = prompt(`Masukkan jumlah stok tambahan untuk ${data.name}:`);
-                        if (addStockQuantity !== null) {
-                            var newQuantity = parseInt(data.quantity) + parseInt(addStockQuantity);
-                            updateStockInFirestore(data.id, newQuantity);
-                        }
-                    });
-
-                    // Highlight low stock items
-                    if (data.quantity < 10) {
-                        row.classList.add('low-stock');
-                    }
                 });
 
-                // Update pagination
-                var pagination = document.getElementById('pagination');
-                pagination.innerHTML = '';
+                // Display pagination buttons
+                displayPagination(totalPages);
 
-                for (let i = 1; i <= totalPages; i++) {
-                    const button = document.createElement('button');
-                    button.textContent = i;
-                    if (i === currentPage) {
-                        button.classList.add('active');
-                    }
-                    button.addEventListener('click', function() {
-                        currentPage = i;
-                        displayStockFromFirestore();
+                // Add delete button event listeners
+                document.querySelectorAll('.delete-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        let docId = button.getAttribute('data-id');
+                        deleteIndomieFromFirestore(docId);
                     });
-                    pagination.appendChild(button);
-                }
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
+                });
+
+                // Add stock button event listeners
+                document.querySelectorAll('.add-stock-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        let docId = button.getAttribute('data-id');
+                        let additionalStock = prompt('Masukkan jumlah stok yang ingin ditambahkan:');
+                        if (additionalStock && !isNaN(additionalStock)) {
+                            let currentStock = stocks.find(stock => stock.id === docId).quantity;
+                            updateStockInFirestore(docId, currentStock + parseInt(additionalStock));
+                        } else {
+                            alert('Mohon masukkan angka yang valid.');
+                        }
+                    });
+                });
             });
         }
 
-        function loadItemNames() {
-            var selectOutgoingItem = document.getElementById('outgoingItemName');
-            var selectAddStockItem = document.getElementById('addStockItemName');
-            selectOutgoingItem.innerHTML = ''; // Clear existing options
-            selectAddStockItem.innerHTML = ''; // Clear existing options
+        function displayPagination(totalPages) {
+            const paginationDiv = document.getElementById('pagination');
+            paginationDiv.innerHTML = ''; // Clear existing pagination buttons
 
-            getDocs(collection(db, "indomieStock"))
-            .then((querySnapshot) => {
-                querySnapshot.forEach((doc) => {
-                    var data = doc.data();
-                    var optionOutgoing = document.createElement('option');
-                    var optionAddStock = document.createElement('option');
-                    optionOutgoing.value = data.name;
-                    optionOutgoing.textContent = data.name;
-                    optionAddStock.value = data.name;
-                    optionAddStock.textContent = data.name;
-                    selectOutgoingItem.appendChild(optionOutgoing);
-                    selectAddStockItem.appendChild(optionAddStock);
+            for (let i = 1; i <= totalPages; i++) {
+                const button = document.createElement('button');
+                button.textContent = i;
+                button.classList.toggle('active', i === currentPage);
+                button.addEventListener('click', () => {
+                    currentPage = i;
+                    displayStockFromFirestore();
                 });
-            })
-            .catch((error) => {
-                console.error("Error getting documents: ", error);
-            });
+                paginationDiv.appendChild(button);
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('indomieStockForm').addEventListener('submit', function(event) {
-                event.preventDefault();
+        // Handle form submission for adding stock
+        document.getElementById('indomieStockForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let itemName = document.getElementById('itemName').value;
+            let itemQuantity = document.getElementById('indomieStock').value;
+            let itemBuyPrice = document.getElementById('indomieBuyPrice').value;
+            let itemSellPrice = document.getElementById('indomieSellPrice').value;
+            let itemExpiryDate = document.getElementById('indomieExpiryDate').value;
 
-                var itemName = document.getElementById('itemName').value;
-                var itemBuyPrice = document.getElementById('indomieBuyPrice').value;
-                var itemSellPrice = document.getElementById('indomieSellPrice').value;
-                var itemStock = document.getElementById('indomieStock').value;
-                var itemExpiryDate = document.getElementById('indomieExpiryDate').value;
-
-                addIndomieToFirestore(itemName, itemStock, itemBuyPrice, itemSellPrice, itemExpiryDate);
-
-                document.getElementById('indomieStockForm').reset();
-            });
-
-            document.getElementById('indomieOutgoingForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var itemName = document.getElementById('outgoingItemName').value;
-                var outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
-
-                getDocs(collection(db, "indomieStock"))
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        var data = doc.data();
-                        if (data.name === itemName) {
-                            var currentStock = data.quantity;
-                            if (outgoingQuantity > currentStock) {
-                                alert(`Jumlah yang keluar (${outgoingQuantity}) melebihi stok yang tersedia (${currentStock}).`);
-                                return;
-                            }
-
-                            var newQuantity = currentStock - outgoingQuantity;
-                            updateStockInFirestore(doc.id, newQuantity);
-
-                            console.log(`Barang yang keluar: ${itemName}, Jumlah: ${outgoingQuantity}`);
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting documents: ", error);
-                });
-            });
-
-            document.getElementById('indomieAddStockForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-
-                var itemName = document.getElementById('addStockItemName').value;
-                var addStockQuantity = parseInt(document.getElementById('addStockQuantity').value);
-
-                getDocs(collection(db, "indomieStock"))
-                .then((querySnapshot) => {
-                    querySnapshot.forEach((doc) => {
-                        var data = doc.data();
-                        if (data.name === itemName) {
-                            var currentStock = data.quantity;
-                            var newQuantity = currentStock + addStockQuantity;
-                            updateStockInFirestore(doc.id, newQuantity);
-
-                            console.log(`Stok ditambahkan untuk: ${itemName}, Jumlah tambahan: ${addStockQuantity}`);
-                        }
-                    });
-                })
-                .catch((error) => {
-                    console.error("Error getting documents: ", error);
-                });
-            });
-
-            document.getElementById('btnBack').addEventListener('click', function() {
-                window.history.back();
-            });
-
-            document.getElementById('searchBar').addEventListener('input', function() {
-                currentPage = 1; 
-                displayStockFromFirestore();
-            });
-
-            displayStockFromFirestore(); 
-            loadItemNames();
+            addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate);
+            document.getElementById('indomieStockForm').reset(); // Reset form
         });
+
+        // Handle form submission for outgoing stock
+        document.getElementById('indomieOutgoingForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let itemName = document.getElementById('outgoingItemName').value;
+            let outgoingQuantity = parseInt(document.getElementById('outgoingQuantity').value);
+
+            let selectedItem = stocks.find(stock => stock.name === itemName);
+            if (selectedItem && selectedItem.quantity >= outgoingQuantity) {
+                updateStockInFirestore(selectedItem.id, selectedItem.quantity - outgoingQuantity);
+            } else {
+                alert('Jumlah stok tidak mencukupi atau barang tidak ditemukan.');
+            }
+
+            document.getElementById('indomieOutgoingForm').reset(); // Reset form
+        });
+
+        // Handle form submission for adding stock
+        document.getElementById('indomieAddStockForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            let itemName = document.getElementById('addStockItemName').value;
+            let additionalStock = parseInt(document.getElementById('addStockQuantity').value);
+
+            let selectedItem = stocks.find(stock => stock.name === itemName);
+            if (selectedItem) {
+                updateStockInFirestore(selectedItem.id, selectedItem.quantity + additionalStock);
+            } else {
+                alert('Barang tidak ditemukan.');
+            }
+
+            document.getElementById('indomieAddStockForm').reset(); // Reset form
+        });
+
+        // Load item names into dropdowns for outgoing stock and adding stock forms
+        function loadItemNames() {
+            const outgoingItemNameSelect = document.getElementById('outgoingItemName');
+            const addStockItemNameSelect = document.getElementById('addStockItemName');
+
+            outgoingItemNameSelect.innerHTML = ''; // Clear existing options
+            addStockItemNameSelect.innerHTML = ''; // Clear existing options
+
+            stocks.forEach(stock => {
+                const option = document.createElement('option');
+                option.value = stock.name;
+                option.textContent = stock.name;
+                outgoingItemNameSelect.appendChild(option);
+                addStockItemNameSelect.appendChild(option);
+            });
+        }
+
+        // Event listener for search bar input
+        document.getElementById('searchBar').addEventListener('input', () => {
+            currentPage = 1; // Reset to first page when searching
+            displayStockFromFirestore();
+        });
+
+        // Event listener for back button
+        document.getElementById('btnBack').addEventListener('click', () => {
+            window.history.back();
+        });
+
+        // Initial load
+        displayStockFromFirestore();
     </script>
 </body>
 </html>
