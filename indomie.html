@@ -62,12 +62,20 @@
             background-color: #007bff;
             color: white;
         }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <button class="btn-back" id="btnBack">Back</button>
     <div class="container">
         <h1>Pencatatan Stok Indomie</h1>
+        <input type="text" id="searchBar" class="search-bar" placeholder="Cari Nama Barang">
+
         <form id="indomieStockForm">
             <div class="form-group">
                 <label for="itemName">Nama Barang:</label>
@@ -116,7 +124,6 @@
             <div class="form-group">
                 <label for="outgoingItemName">Nama Barang yang Keluar:</label>
                 <select id="outgoingItemName" name="outgoingItemName" required>
-                    <!-- Options will be dynamically added here -->
                 </select>
             </div>
             <div class="form-group">
@@ -133,7 +140,6 @@
             <div class="form-group">
                 <label for="addStockItemName">Nama Barang:</label>
                 <select id="addStockItemName" name="addStockItemName" required>
-                    <!-- Options will be dynamically added here -->
                 </select>
             </div>
             <div class="form-group">
@@ -146,12 +152,10 @@
         </form>
     </div>
 
-    <!-- Firebase Modular SDK (v9.x.x) -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-app.js';
         import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/9.0.2/firebase-firestore.js';
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD69JdrxEEsj61vkszCJ0jPPhELbCNq5q0",
             authDomain: "tokogaby-176b7.firebaseapp.com",
@@ -168,6 +172,7 @@
 
         const ITEMS_PER_PAGE = 5; // Jumlah item per halaman
         let currentPage = 1; // Halaman saat ini
+        let stocks = []; // Menyimpan semua data stok
 
         function addIndomieToFirestore(itemName, itemQuantity, itemBuyPrice, itemSellPrice, itemExpiryDate) {
             addDoc(collection(db, "indomieStock"), {
@@ -220,7 +225,7 @@
 
             getDocs(collection(db, "indomieStock"))
             .then((querySnapshot) => {
-                let stocks = [];
+                stocks = []; // Clear previous data
                 querySnapshot.forEach((doc) => {
                     let data = doc.data();
                     data.id = doc.id; // Add the document ID to the data
@@ -230,12 +235,16 @@
                 // Sort stocks by quantity in descending order
                 stocks.sort((a, b) => b.quantity - a.quantity);
 
-                // Pagination logic
-                const totalItems = stocks.length;
+                // Filter stocks based on search input
+                const searchInput = document.getElementById('searchBar').value.toLowerCase();
+                const filteredStocks = stocks.filter(stock => stock.name.toLowerCase().includes(searchInput));
+
+                // Pagination
+                const totalItems = filteredStocks.length;
                 const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
                 const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
                 const endIndex = startIndex + ITEMS_PER_PAGE;
-                const itemsToDisplay = stocks.slice(startIndex, endIndex);
+                const itemsToDisplay = filteredStocks.slice(startIndex, endIndex);
 
                 itemsToDisplay.forEach((data) => {
                     var row = tableBody.insertRow();
@@ -390,8 +399,13 @@
                 window.history.back();
             });
 
-            displayStockFromFirestore(); // Panggil fungsi untuk menampilkan stok saat halaman dimuat
-            loadItemNames(); // Panggil fungsi untuk memuat nama barang ke dalam dropdown
+            document.getElementById('searchBar').addEventListener('input', function() {
+                currentPage = 1; 
+                displayStockFromFirestore();
+            });
+
+            displayStockFromFirestore(); 
+            loadItemNames();
         });
     </script>
 </body>
